@@ -10,8 +10,8 @@ function [B_all, b_all, polyhedrons, bbox_min, bbox_max] = calculate_bisecting_p
     end
 
     % Define bounding box limits
-    bbox_min = min(centers) - 20;
-    bbox_max = max(centers) + 20;
+    bbox_min = min(centers) - 3;
+    bbox_max = max(centers) + 3;
     l = bbox_min';
     u = bbox_max';
 
