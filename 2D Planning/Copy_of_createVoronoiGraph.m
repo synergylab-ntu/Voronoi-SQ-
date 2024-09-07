@@ -107,7 +107,7 @@ function vertexGraph = Copy_of_createVoronoiGraph(polyhedrons)
     % Step 3: Sort the distances by the first column (the distances)
     distances = sortrows(distances, 1);
 
-    thresholdDistance = 3.5*min(vertexGraph.Edges.Weight);
+    thresholdDistance = min(vertexGraph.Edges.Weight);
 
     % Step 4: Add edges based on sorted distances and check for full connectivity
     for k = 1:size(distances, 1)
