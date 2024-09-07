@@ -1,44 +1,71 @@
-function closestEdgeID = findClosestEdge(vertexGraph, point)
+function [startCoords, endCoords] = findClosestEdge(vertexGraph, point)
+    % Initialize variables to track the closest edge
     minDistance = Inf;
     closestEdgeID = [];
+    
+    % Loop through each edge in the graph
     for edgeIdx = 1:numedges(vertexGraph)
         % Get the indices of the nodes at the ends of the edge
         startIdx = vertexGraph.Edges.EndNodes(edgeIdx, 1);
         endIdx = vertexGraph.Edges.EndNodes(edgeIdx, 2);
         
         % Get the coordinates of the start and end nodes
-        startCoords = [vertexGraph.Nodes.X(startIdx), vertexGraph.Nodes.Y(startIdx)];
-        endCoords = [vertexGraph.Nodes.X(endIdx), vertexGraph.Nodes.Y(endIdx)];
+        startCoordsCurrent = [vertexGraph.Nodes.X(startIdx), vertexGraph.Nodes.Y(startIdx)];
+        endCoordsCurrent = [vertexGraph.Nodes.X(endIdx), vertexGraph.Nodes.Y(endIdx)];
         
         % Calculate the squared distance from the point to the edge
-        distSquared = pointToEdgeSquaredDistance(point, startCoords, endCoords);
-        
+        distSquared = pointToEdgeSquaredDistance(point, startCoordsCurrent, endCoordsCurrent);
+
         % Update the closest edge if the current edge is closer
         if distSquared < minDistance
             minDistance = distSquared;
             closestEdgeID = edgeIdx;
+            startCoords = startCoordsCurrent;
+            endCoords = endCoordsCurrent;
         end
     end
 end
 
 function distSquared = pointToEdgeSquaredDistance(point, startCoords, endCoords)
-    edgeVector = endCoords - startCoords;
-    pointVector = point - startCoords;
-    edgeLengthSquared = sum(edgeVector.^2);
+    % Unpack point and coordinates
+    x = point(1);
+    y = point(2);
+    x1 = startCoords(1);
+    y1 = startCoords(2);
+    x2 = endCoords(1);
+    y2 = endCoords(2);
     
-    if edgeLengthSquared == 0
-        % The edge is actually a point
-        distSquared = sum((point - startCoords).^2);
-        return;
+    % Calculate vectors
+    a = x - x1;
+    b = y - y1;
+    c = x2 - x1;
+    d = y2 - y1;
+    
+    % Calculate squared length of the segment
+    lenSq = c^2 + d^2;
+    
+    % Calculate the parameter t for projection
+    if lenSq ~= 0 % In case of zero length line segment
+        dot = a * c + b * d;
+        t = dot / lenSq;
+    else
+        t = -1;
     end
     
-    % Calculate the projection parameter t
-    t = dot(pointVector, edgeVector) / edgeLengthSquared;
-    t = max(0, min(1, t));
+    % Find the closest point on the line segment
+    if t < 0
+        xx = x1;
+        yy = y1;
+    elseif t > 1
+        xx = x2;
+        yy = y2;
+    else
+        xx = x1 + t * c;
+        yy = y1 + t * d;
+    end
     
-    % Calculate the projection of the point onto the edge
-    projection = startCoords + t * edgeVector;
-    
-    % Calculate the squared distance from the point to the projection
-    distSquared = sum((point - projection).^2);
+    % Calculate the distance from the point to the closest point on the line segment
+    dx = x - xx;
+    dy = y - yy;
+    distSquared = dx^2 + dy^2;
 end
