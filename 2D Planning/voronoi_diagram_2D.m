@@ -1,4 +1,4 @@
-function [polyhedrons] = voronoi_diagram_2D(Params)
+function [polyhedrons] = voronoi_diagram_2D(Params,img)
     % Number of points to plot
     numPoints = 1000;
 
@@ -20,8 +20,14 @@ function [polyhedrons] = voronoi_diagram_2D(Params)
     end
 
     % Define the bounding box
-    bbox_min = [min(Xp(:)) - 2, min(Yp(:)) - 2]; % [x_min, y_min]
-    bbox_max = [max(Xp(:)) + 2, max(Yp(:)) + 2]; % [x_max, y_max]
+    if nargin < 2 
+        bbox_min = [min(Xp(:)) - 2, min(Yp(:)) - 2]; % [x_min, y_min]
+        bbox_max = [max(Xp(:)) + 2, max(Yp(:)) + 2]; % [x_max, y_max]
+    elseif nargin == 2
+        [height, width, ~] = size(img);
+        bbox_min = [0,-height];
+        bbox_max = [width,0];
+    end
 
     % Initialize B matrices and b vectors
     B_matrices = cell(n_se, 1);
@@ -169,3 +175,4 @@ function [xc1, yc1, xc2, yc2] = findClosestPoints(params1, params2)
     [xc1, yc1] = transform(x1, y1, params1.theta, params1.h, params1.k);
     [xc2, yc2] = transform(x2, y2, params2.theta, params2.h, params2.k);
 end
+
