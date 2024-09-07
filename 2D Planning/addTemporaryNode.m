@@ -1,11 +1,6 @@
-function [tempNodeID, intersectionPoint, updatedGraph] = addTemporaryNode(vertexGraph, edgeIdx, point)
-    % Get the indices of the nodes at the ends of the edge
-    startIdx = vertexGraph.Edges.EndNodes(edgeIdx, 1);
-    endIdx = vertexGraph.Edges.EndNodes(edgeIdx, 2);
-    
-    % Get the coordinates of the start and end nodes
-    startCoords = [vertexGraph.Nodes.X(startIdx), vertexGraph.Nodes.Y(startIdx)];
-    endCoords = [vertexGraph.Nodes.X(endIdx), vertexGraph.Nodes.Y(endIdx)];
+function [tempNodeID, intersectionPoint, updatedGraph] = addTemporaryNode(vertexGraph, point)
+    % Use findClosestEdge to get the closest edge's start and end coordinates
+    [startCoords, endCoords] = findClosestEdge(vertexGraph, point);
     
     % Compute the vectors needed for projection
     edgeVector = endCoords - startCoords;
@@ -30,6 +25,10 @@ function [tempNodeID, intersectionPoint, updatedGraph] = addTemporaryNode(vertex
     % Add the new node to the graph
     updatedGraph = addnode(vertexGraph, newNodeTable);
     
+    % Get the indices of the nodes closest to the intersection point
+    startIdx = find(ismember([vertexGraph.Nodes.X, vertexGraph.Nodes.Y], startCoords, 'rows'));
+    endIdx = find(ismember([vertexGraph.Nodes.X, vertexGraph.Nodes.Y], endCoords, 'rows'));
+    
     % Calculate the distances (weights) for the new edges
     distStartToTemp = sqrt(sum((intersectionPoint - startCoords).^2));
     distTempToEnd = sqrt(sum((intersectionPoint - endCoords).^2));
@@ -39,5 +38,6 @@ function [tempNodeID, intersectionPoint, updatedGraph] = addTemporaryNode(vertex
     updatedGraph = addedge(updatedGraph, tempNodeID, endIdx, distTempToEnd);
     
     % Optionally, remove the original edge if you no longer need it
-    updatedGraph = rmedge(updatedGraph, edgeIdx);
+    % updatedGraph = rmedge(updatedGraph, edgeIdx);
+
 end
