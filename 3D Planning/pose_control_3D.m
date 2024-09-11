@@ -54,11 +54,9 @@ function F = in_out(x, y, z, params)
     y_loc = val(2);
     z_loc = val(3);
 
-    % Define the modified power function to handle signs
-    pow = @(base, exp) (abs(base).^exp) .* sign(base);
-
-    % Compute F using the custom power function
-    F = pow(pow(x_loc/a1, 2/epsilon2) + pow(y_loc/a2, 2/epsilon2), epsilon2/epsilon1) + pow(z_loc/a3, 2/epsilon1) - 1;
+     F =  (    ((x_loc/a1)^2)^(1/epsilon2) ...
+              +  ((y_loc/a2)^2)^(1/epsilon2) )^(epsilon2 / epsilon1) ...
+              +         ((z_loc/a3)^2)^(1/epsilon1)   - 1;
 end
 
 function neg_grad_V = neg_grad_V(x, y, z, params)
