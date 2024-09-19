@@ -16,8 +16,8 @@ function [polyhedrons, bbox_min, bbox_max] = Copy2_of_voronoi_diagram_3D(params)
     cluster_map = zeros(1, num_superquadrics);
     cluster_id = 0;
 
-    % Create a distance cache to avoid recalculating distances
-    dist_cache = cell(num_superquadrics);
+    % Create a cache to store distances and u, v values
+    cache = cell(num_superquadrics);
 
     for i = 1:num_superquadrics
         if cluster_map(i) == 0
@@ -27,14 +27,17 @@ function [polyhedrons, bbox_min, bbox_max] = Copy2_of_voronoi_diagram_3D(params)
         end
 
         for j = i+1:num_superquadrics
-            if isempty(dist_cache{i, j})
-                [~, ~, ~, ~, min_distance] = find_closest_points(params{i}, params{j});
-                dist_cache{i, j} = min_distance;
+            if isempty(cache{i, j})
+                [u1, v1, u2, v2, min_distance] = find_closest_points(params{i}, params{j});
+                cache{i, j} = {min_distance, u1, v1, u2, v2};
+                [xi, yi, zi] = superquadric_point(params{i}, u1, v1);
+                [xj, yj, zj] = superquadric_point(params{j}, u2, v2);
+                Fi = in_out(xj,yj,zj,params{i}); Fj = in_out(xi,yi,zi,params{j}); 
             else
-                min_distance = dist_cache{i, j};
+                min_distance = cache{i, j}{1};
             end
 
-            if min_distance < 1e-3
+            if  (Fi)<1e-3 && (Fj)<1e-3 %min_distance < 1e-3
                 if cluster_map(j) == 0
                     cluster_map(j) = cluster_map(i);
                     clusters{cluster_map(i)} = [clusters{cluster_map(i)}, j];
@@ -69,7 +72,7 @@ function [polyhedrons, bbox_min, bbox_max] = Copy2_of_voronoi_diagram_3D(params)
         for j = 1:num_clusters
             if i ~= j
                 cluster_j = clusters{j};
-                [u1_opt, v1_opt, u2_opt, v2_opt] = find_closest_points_between_clusters(params, cluster_i, cluster_j, dist_cache);
+                [u1_opt, v1_opt, u2_opt, v2_opt] = find_closest_points_between_clusters(params, cluster_i, cluster_j, cache);
                 [X1_opt, Y1_opt, Z1_opt] = superquadric_point(params{cluster_i(1)}, u1_opt, v1_opt);
                 [X2_opt, Y2_opt, Z2_opt] = superquadric_point(params{cluster_j(1)}, u2_opt, v2_opt);
 
@@ -126,18 +129,19 @@ function [polyhedrons, bbox_min, bbox_max] = Copy2_of_voronoi_diagram_3D(params)
     hold off;
 end
 
-function [u1_opt, v1_opt, u2_opt, v2_opt] = find_closest_points_between_clusters(params, cluster_i, cluster_j, dist_cache)
+function [u1_opt, v1_opt, u2_opt, v2_opt] = find_closest_points_between_clusters(params, cluster_i, cluster_j, cache)
     min_distance = Inf;
     u1_opt = 0; v1_opt = 0; u2_opt = 0; v2_opt = 0;
 
     for idx_i = cluster_i
         for idx_j = cluster_j
-            [u1, v1, u2, v2, dist] = find_closest_points(params{idx_i}, params{idx_j});
-            % Use the cached distance if available
-            if isempty(dist_cache{idx_i, idx_j})       
-                dist_cache{idx_i, idx_j} = dist;
+            if ~isempty(cache{idx_i, idx_j})
+                [dist, u1, v1, u2, v2] = cache{idx_i, idx_j}{:};
+            elseif ~isempty(cache{idx_j, idx_i})
+                [dist, u2, v2, u1, v1] = cache{idx_j, idx_i}{:};
             else
-                dist = dist_cache{idx_i, idx_j};
+                [u1, v1, u2, v2, dist] = find_closest_points(params{idx_i}, params{idx_j});
+                cache{idx_i, idx_j} = {dist, u1, v1, u2, v2};
             end
 
             if dist < min_distance
